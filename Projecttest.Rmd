@@ -1,0 +1,265 @@
+---
+title: "Project2023"
+author: "Josh Gilheany (22221584)"
+date: "2023-05-31"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+
+```{r}
+library(GenomicFeatures)
+library(AnnotationDbi)
+library(tximport)
+library(DESeq2)
+library(sva)
+library(PCAtools)
+```
+
+
+```{r}
+#First leg of female analysis
+
+setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data/FQuants")
+
+#Sets up tx2gene (allows you to map from transcripts to genes)
+txdb <- makeTxDbFromGFF("Mus_musculus.GRCm39.105.gtf")
+k <- keys(txdb, keytype ="TXNAME")
+tx2gene <- select(txdb, k, "GENEID", "TXNAME")
+
+#Reads in biotypes file. This lists all protein-coding genes, which are the only ones we're interested for this analysis.
+biotypes <- read.delim("biotypes.txt", sep = " ")
+
+
+#Filters tx2gene based on protein-coding genes only
+protein_coding <- biotypes[biotypes$gene_biotype == "protein_coding",]
+tx2gene_filt <- tx2gene[tx2gene$GENEID %in% protein_coding$ensembl_gene_id,]
+
+
+
+#1: this Sets up path to our files. NOTE: you will have to change the samples file names (with all the groups and info)depending on what your folders are called.
+#2:Creates an object called txi.salmon, this is essentially all of your gene count files side by side.
+fsamples <- read.delim("SampleData_F_SIvG_Hipp.txt", header = TRUE, sep = "\t")
+fsamples$replicate <- factor(fsamples$replicate)
+
+ffiles <- file.path(paste0(fsamples$File_name), "quant.sf")
+names(ffiles) <- paste0(fsamples$Full.Name)
+all(file.exists(ffiles))
+head(ffiles)
+ffactor_cols <- sapply(fsamples, is.factor)
+
+ftxi.salmon <- tximport(ffiles, type = "salmon", tx2gene = tx2gene_filt, ignoreTxVersion = TRUE)
+
+
+#First analysis using DEseq2, this is to get a normalised count matrix which we can use to find surrogate variables using SVAseq. Note the only factor being compared here is Group_Combined.
+fdds <- DESeqDataSetFromTximport(txi = ftxi.salmon,
+                                colData = fsamples, 
+                                design = ~ Group_Combined)
+
+#removes genes with very low, irrelevent counts
+fkeep <- rowSums(counts(fdds)) >= 100
+fdds <- fdds[fkeep,]
+
+
+#forces it to compare to the control group
+fdds$Group_Combined <- relevel(fdds$Group_Combined, ref = "FVG-Hipp")
+fdds <- DESeq(fdds)
+
+
+```
+
+```{r}
+setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data/FQuants")
+#Female SVA analysis
+#Uses the normalised count matrix to find Number of Surrogate Variables (SVs)
+fcounts <- fcounts_normalized <- counts(fdds, normalized=TRUE)
+
+fmod <- model.matrix(~ Group_Combined,fsamples)
+fmod0 <- model.matrix(~ 1, fsamples)
+fsvseq = svaseq(fcounts_normalized, 
+                fmod, 
+                fmod0)$sv
+
+
+```
+Female samples no. significant variables = 3
+
+```{r}
+setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data/FQuants")
+
+#Creates a new samples object with the surrogate variables (SVs) attached. NOTE: You will have to vary this based on the number of SVs. i.e. if you only have 2 SVs you'll have "colnames(svseq) <- c("S1", "S2")"
+#in this case, 3
+colnames(fsvseq) <- c("S1", "S2", "S3")
+fsamples2 <- cbind(fsamples, fsvseq)
+
+#set up 
+#Final ANalysis with SVs included as covariates. NOTE: you'll have to change the number of covariates if you only have 2 etc.
+fdds <- DESeqDataSetFromTximport(txi = ftxi.salmon,
+                                colData = fsamples2, 
+                                design = ~ S1 + S2 + S3 + Group_Combined)
+
+fkeep <- rowSums(counts(fdds)) >= 100
+fdds <- fdds[fkeep,]
+
+
+fdds$Group_Combined <- relevel(fdds$Group_Combined, ref = "FVG-Hipp")
+fdds <- DESeq(fdds)
+
+#Write Final Analysis into working directory
+fres <- results(fdds, name="Group_Combined_FVSI.Hipp_vs_FVG.Hipp")
+summary(fres)
+write.table(fres, "Results.txt")
+```
+
+
+```{r}
+#Male analysis step 1
+
+setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data/MQuants")
+
+#1: this Sets up path to our files. NOTE: you will have to change the samples file names (with all the groups and info)depending on what your folders are called.
+#2:Creates an object called txi.salmon, this is essentially all of your gene count files side by side.
+msamples <- read.delim("SampleData_M_SIvG_Hipp.txt", header = TRUE, sep = "\t")
+msamples$replicate <- factor(msamples$replicate)
+
+mfiles <- file.path(paste0(msamples$File_name), "quant.sf")
+names(mfiles) <- paste0(msamples$Full.Name)
+all(file.exists(mfiles))
+head(mfiles)
+mfactor_cols <- sapply(msamples, is.factor)
+
+mtxi.salmon <- tximport(mfiles, type = "salmon", tx2gene = tx2gene_filt, ignoreTxVersion = TRUE)
+
+
+#First analysis using DEseq2, this is to get a normalised count matrix which we can use to find surrogate variables using SVAseq. Note the only factor being compared here is Group_Combined.
+mdds <- DESeqDataSetFromTximport(txi = mtxi.salmon,
+                                colData = msamples, 
+                                design = ~ Group_Combined)
+
+#removes genes with very low, irrelevent counts
+mkeep <- rowSums(counts(mdds)) >= 1000
+mdds <- mdds[fkeep,]
+
+
+#forces it to compare to the control group
+mdds$Group_Combined <- relevel(mdds$Group_Combined, ref = "MVG-Hipp")
+mdds <- DESeq(mdds)
+
+```
+```{r}
+
+```
+
+
+
+```{r}
+#male SVA 
+setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data/MQuants")
+
+#Uses the normalised count matrix to find Number of Surrogate Variables (SVs)
+mcounts <- mcounts_normalized <- counts(mdds, normalized=TRUE)
+
+mmod <- model.matrix(~ Group_Combined,
+                     msamples)
+
+
+
+
+mmod0 <- model.matrix(~ 1, msamples)
+
+
+msvseq = svaseq(mcounts_normalized, mmod, mmod0)
+
+```
+
+```{r}
+#Part 2 of male analysis
+#seems to be 2 surrogate variables in males, compared to three in females
+
+setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data/MQuants")
+
+#Creates a new samples object with the surrogate variables (SVs) attached. NOTE: You will have to vary this based on the number of SVs. i.e. if you only have 2 SVs you'll have "colnames(svseq) <- c("S1", "S2")"
+#in this case, 3
+colnames(msvseq) <- c("S1", "S2")
+msamples2 <- cbind(msamples, msvseq)
+
+#set up 
+#Final ANalysis with SVs included as covariates. NOTE: you'll have to change the number of covariates if you only have 2 etc.
+mdds <- DESeqDataSetFromTximport(txi = mtxi.salmon,
+                                colData = msamples2, 
+                                design = ~ S1 + S2 + Group_Combined)
+
+mkeep <- rowSums(counts(mdds)) >= 100
+mdds <- mdds[mkeep,]
+
+
+mdds$Group_Combined <- relevel(mdds$Group_Combined, 
+                               ref = "FVG-Hipp")
+mdds <- DESeq(mdds)
+
+#Write Final Analysis into working directory
+mres <- results(mdds, name="Group_Combined_MVSI.Hipp_vs_MVG.Hipp")
+summary(mres)
+write.table(mres, "Results.txt")
+```
+
+
+
+```{r}
+#Female analysis
+
+f.rld <- assay(rlog(fdds))
+rownames(fsamples) <- fsamples$Full.Name
+colnames(f.rld) <- fsamples$Full.Name
+
+
+fsamples$replicate <- factor(fsamples$replicate)
+fpca = PCAtools::pca(f.rld, metadata = fsamples)
+
+
+biplot(fpca,
+       colby = 'Group',
+       colkey = c('FVG' ='royalblue', 'FVSI'='red1'),
+       hline = 0,
+       vline = 0,
+       legendPosition = 'right',
+       legendLabSize = 12,
+       legendIconSize = 8.0,
+       title = 'Female Hipp',
+       #subtitle = 'PC1 versus PC2'
+       )
+
+#biplot(pca, colby = "Group_Combined", colkey = samples$Group_Combined ,title = "Female Hipp.")
+```
+
+
+```{r}
+#Male analysis
+
+m.rld <- assay(rlog(mdds))
+rownames(msamples) <- msamples$Full.Name
+colnames(m.rld) <- msamples$Full.Name
+
+
+msamples$replicate <- factor(msamples$replicate)
+mpca = PCAtools::pca(m.rld, metadata = msamples)
+
+
+biplot(mpca,
+       colby = 'Group',
+       colkey = c('MVG' ='royalblue', 'MVSI'='red1'),
+       hline = 0,
+       vline = 0,
+       legendPosition = 'right',
+       legendLabSize = 12,
+       legendIconSize = 8.0,
+       title = 'Male Hipp',
+       #subtitle = 'PC1 versus PC2'
+       )
+
+#biplot(pca, colby = "Group_Combined", colkey = samples$Group_Combined ,title = "Female Hipp.")
+```
+
