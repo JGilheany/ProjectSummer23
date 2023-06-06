@@ -17,6 +17,11 @@ library(tximport)
 library(DESeq2)
 library(sva)
 library(PCAtools)
+library(vsn)
+library(hexbin)
+library(pheatmap)
+library(EnhancedVolcano)
+
 ```
 
 
@@ -171,9 +176,15 @@ mmod <- model.matrix(~ Group_Combined,
 mmod0 <- model.matrix(~ 1, msamples)
 
 
-msvseq = svaseq(mcounts_normalized, mmod, mmod0)
 
+msvseq = svaseq(mcounts_normalized, mmod, mmod0, constant = 2)$sv
+
+#default constant (1) did not work, used 2 instead
 ```
+
+
+
+
 
 ```{r}
 #Part 2 of male analysis
@@ -197,7 +208,7 @@ mdds <- mdds[mkeep,]
 
 
 mdds$Group_Combined <- relevel(mdds$Group_Combined, 
-                               ref = "FVG-Hipp")
+                               ref = "MVG-Hipp")
 mdds <- DESeq(mdds)
 
 #Write Final Analysis into working directory
@@ -261,5 +272,58 @@ biplot(mpca,
        )
 
 #biplot(pca, colby = "Group_Combined", colkey = samples$Group_Combined ,title = "Female Hipp.")
+```
+```{r}
+get_upregulated <- function(df){
+
+	key <- intersect(rownames(df)[which(df$log2FoldChange>=0.5)], rownames(df)[which(df$pvalue<=0.1)])
+
+    results <- as.data.frame((df)[which(rownames(df) %in% key),])
+	return(results)
+}
+
+get_downregulated <- function(df){
+
+  	key <- intersect(rownames(df)[which(df$log2FoldChange<=-0.5)], rownames(df)[which(df$pvalue<=0.1)])
+
+  	results <- as.data.frame((df)[which(rownames(df) %in% key),])
+  	return(results)
+}
+
+mres
+```
+
+
+
+```{r}
+
+## Calculate distance between samples
+msampleDists <- dist(t(m.rld))
+
+msampleDistMatrix
+## Place distances in matrix
+msampleDistMatrix <- as.matrix(msampleDists)
+
+## Optional, remove colnames
+colnames(msampleDistMatrix) <- NULL
+
+## create annotation dataframe
+m.ann <- data.frame(Condition = msamples$Group)
+
+mcol <- c("blue", "red1")
+names(col) <- c("MVG", "MVSI")
+ann_col <- list(condition = mcol)
+
+## match annotation rownames to distance mat
+rownames(m.ann) <- rownames(msampleDistMatrix)
+
+pheatmap(mat=msampleDistMatrix,
+         ## pass distance metric calculated to heatmap
+         clustering_distance_rows=msampleDists,
+         clustering_distance_cols=msampleDists,
+
+         ## heatmap colours
+         col=hcl.colors(100,"GnBu",rev=T))
+
 ```
 
