@@ -1,0 +1,30 @@
+---
+title: "pathwayanalysis"
+author: "Josh Gilheany (22221584)"
+date: "2023-06-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+```
+
+
+```{r}
+setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data/FQuants")
+
+ftable <- read.table("Results.txt")
+
+ftable
+
+setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data/MQuants")
+
+mtable <- read.table("Results.txt")
+
+mtable
+```
+
