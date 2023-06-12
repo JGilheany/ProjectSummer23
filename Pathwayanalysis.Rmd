@@ -11,6 +11,27 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(dplyr)
+library('biomaRt')
+library(tibble)
+
+
+get_upregulated <- function(df){
+
+	key <- intersect(rownames(df),#[which(df$log2FoldChange>=0.5)], 
+	                 rownames(df)[which(df$padj<=0.05)])
+
+    results <- as.data.frame((df)[which(rownames(df) %in% key),])
+	return(results)
+}
+
+get_downregulated <- function(df){
+
+  	key <- intersect(rownames(df),#[which(df$log2FoldChange<=-0.5)], 
+  	                 rownames(df)[which(df$padj<=0.05)])
+
+  	results <- as.data.frame((df)[which(rownames(df) %in% key),])
+  	return(results)
+}
 ```
 
 
@@ -26,5 +47,147 @@ setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data/MQuants")
 mtable <- read.table("Results.txt")
 
 mtable
+
+
+#reads in table with all mouse ENSEMBL ids, MGI and HGNC for later addition
+setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data")
+
+convert <- read.csv2("Convert_ENSEMBL_MGI_HGNC.txt", sep="")
+
+convert
 ```
+
+```{r}
+setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data/MQuants")
+#nrow(mtable)
+#nrow(get_upregulated(mtable))
+#nrow(get_downregulated(mtable))
+
+
+upregmale <- get_upregulated(mtable)
+downregmale <- get_downregulated(mtable)
+
+write.table(upregmale, "UDEGMale.txt")
+write.table(downregmale, "DDEGMale.txt")
+
+
+upregmale <- upregmale %>% 
+  rownames_to_column(var = "Genes")
+
+
+
+diffgenesmale <- pull(upregmale, "Genes")
+print(diffgenesmale, quote=FALSE)
+
+write.table(diffgenesmale, "diffgenesmale.txt", quote=FALSE, row.names = FALSE)
+
+setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data/FQuants")
+nrow(ftable)
+nrow(get_upregulated(ftable))
+nrow(get_downregulated(ftable))
+
+upregfem <- get_upregulated(ftable)
+downregfem <- get_downregulated(ftable)
+
+write.table(upregfem, "UDEGFemale.txt")
+write.table(downregfem, "DDEGFemale.txt")
+
+upregfem <- upregfem %>% 
+  rownames_to_column(var = "Genes")
+
+
+diffgenesfem <- pull(upregfem, "Genes")
+
+write.table(diffgenesfem, "diffgenesfem.txt", quote=FALSE, row.names = FALSE)
+
+
+#upregmale[,0]
+
+```
+
+```{r}
+listEnsembl()
+ensembl <- useEnsembl(biomart = "genes")
+datasets <- listDatasets(ensembl)
+head(datasets)
+searchDatasets(mart = ensembl, pattern = "mmusculus")
+```
+
+```{r}
+ensembl <- useDataset(dataset = "mmusculus_gene_ensembl", mart = ensembl)
+
+head(ensembl)
+```
+
+
+
+```{r}
+
+#for (x in rownames(upregfem)) {print(x)}
+
+upregfem[,-4]
+mart <- useDataset("mmusculus_gene_ensembl", useMart("ensembl"))
+genes <- rownames(upregfem)
+upregfem$id <- NA
+G_list <- getBM(filters= "ensembl_gene_id", attributes= c("external_gene_name"),values=genes,mart= mart)
+?getBM
+
+G_list
+listAttributes(ensembl)
+
+datasets <- listDatasets(ensembl)
+head(datasets)
+searchDatasets(mart = ensembl, pattern = "mmusculus")
+```
+
+```{r}
+human = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+```
+
+
+
+```{r}
+musGenes <- c("Hmmr", "Tlx3", "Cpeb4")
+#human = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+#mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+# Basic function to convert mouse to human gene names
+
+convertMouseGeneList <- function(x){
+
+require("biomaRt")
+
+#internet bad, so taking these out to run separately rather than doing each time
+#human = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+
+#mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+
+genesV2 = getLDS(attributes = c("ensembl_gene_id"), filters = "ensembl_gene_id", values = x , mart = mouse, attributesL = c("hgnc_symbol"), martL = human, uniqueRows=T)
+
+humanx <- unique(genesV2[, 2])
+
+
+# Print the first 6 genes found to the screen
+
+print(head(humanx))
+
+return(humanx)
+
+}
+```
+
+```{r}
+convertMouseGeneList(diffgenesmale)
+
+?useEnsembl
+```
+```{r}
+setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data")
+
+convert <- read.csv2("Convert_ENSEMBL_MGI_HGNC.txt", sep="")
+
+
+
+```
+
 

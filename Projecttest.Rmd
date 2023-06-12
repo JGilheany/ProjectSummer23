@@ -290,7 +290,7 @@ get_downregulated <- function(df){
   	return(results)
 }
 
-mres
+get_upregulated(mres)
 ```
 
 
