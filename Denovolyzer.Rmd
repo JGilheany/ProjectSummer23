@@ -1,0 +1,287 @@
+---
+title: "Denovolyzer"
+author: "Josh Gilheany (22221584)"
+date: "2023-06-13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(denovolyzeR)
+```
+
+
+
+```{r}
+setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data/FinalAnalyses")
+malegenes <- readLines("Malegenes.csv")
+
+femalegenes <- readLines("Femalegenes.csv")
+
+setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data/Denovolyzer")
+
+
+allgenes <- readLines("All_GENES.txt",)
+ASDgenes <- read.csv2("Autism_denovo_data.txt", sep="\t")
+CTRLgenes <- read.csv2("Control_denovo_data.txt", sep="\t")
+DDgenes <- read.csv2("DD_denovo_data.txt", sep="\t")
+IDgenes <- read.csv2("ID_denovo_data.txt", sep="\t")
+SCZgenes <- read.csv2("SCZ_denovo_data.txt", sep="\t")
+SIBgenes <- read.csv2("Sibling_denovo_data.txt", sep="\t")
+
+```
+
+```{r}
+malebggenes <- allgenes[allgenes %in% malegenes == FALSE]
+
+femalebggenes <- allgenes[allgenes %in% femalegenes == FALSE]
+
+length(malebggenes)
+length(femalebggenes)
+```
+
+
+```{r}
+
+
+```
+
+
+```{r}
+allgenes
+
+ASDgenes
+CTRLgenes
+DDgenes
+IDgenes
+SCZgenes
+SIBgenes
+```
+
+```{r}
+?denovolyzeByGene
+
+
+
+ASD.bg <- denovolyzeByClass(genes=ASDgenes$Gene,
+                 classes=ASDgenes$Class,
+                 nsamples=6430)
+
+CTRL.bg <- denovolyzeByClass(genes=CTRLgenes$Gene,
+                 classes=CTRLgenes$Class,
+                 nsamples=54)
+
+ID.bg <- denovolyzeByClass(genes=IDgenes$Gene,
+                 classes=IDgenes$Class,
+                 nsamples=192)
+
+DD.bg <- denovolyzeByClass(genes=DDgenes$Gene,
+                 classes=DDgenes$Class,
+                 nsamples=4293)
+
+SCZ.bg <- denovolyzeByClass(genes=SCZgenes$Gene,
+                 classes=SCZgenes$Class,
+                 nsamples=3394)
+
+SIB.bg <- denovolyzeByClass(genes=SIBgenes$Gene,
+                 classes=SIBgenes$Class,
+                 nsamples=1995)
+```
+
+```{r}
+ASD.bg
+CTRL.bg
+ID.bg
+DD.bg
+SCZ.bg
+SIB.bg
+```
+```{r}
+
+#Autism analysis
+
+ASDmale <- denovolyzeByClass(genes=ASDgenes$Gene,
+                 classes=ASDgenes$Class,
+                 nsamples=6430,
+                 includeGenes = malegenes)
+
+ASDmalebg <- denovolyzeByClass(genes=ASDgenes$Gene,
+                 classes=ASDgenes$Class,
+                 nsamples=6430,
+                 includeGenes = malebggenes)
+
+ASDfemale <- denovolyzeByClass(genes=ASDgenes$Gene,
+                 classes=ASDgenes$Class,
+                 nsamples=6430,
+                 includeGenes = femalegenes)
+
+ASDfemalebg <- denovolyzeByClass(genes=ASDgenes$Gene,
+                 classes=ASDgenes$Class,
+                 nsamples=6430,
+                 includeGenes = femalebggenes)
+
+
+ASDmale
+ASDmalebg
+ASDfemale
+ASDfemalebg
+
+```
+```{r}
+#Control analysis
+
+CTRLmale <- denovolyzeByClass(genes=CTRLgenes$Gene,
+                 classes=CTRLgenes$Class,
+                 nsamples=54,
+                 includeGenes = malegenes)
+
+CTRLmalebg <- denovolyzeByClass(genes=CTRLgenes$Gene,
+                 classes=CTRLgenes$Class,
+                 nsamples=54,
+                 includeGenes = malebggenes)
+
+CTRLfemale <- denovolyzeByClass(genes=CTRLgenes$Gene,
+                 classes=CTRLgenes$Class,
+                 nsamples=54,
+                 includeGenes = femalegenes)
+
+CTRLfemalebg <- denovolyzeByClass(genes=CTRLgenes$Gene,
+                 classes=CTRLgenes$Class,
+                 nsamples=54,
+                 includeGenes = femalebggenes)
+
+
+CTRLmale
+CTRLmalebg
+CTRLfemale
+CTRLfemalebg
+```
+
+```{r}
+#DD analysis
+DDmale <- denovolyzeByClass(genes=DDgenes$Gene,
+                 classes=DDgenes$Class,
+                 nsamples=4293,
+                 includeGenes = malegenes)
+
+DDmalebg <- denovolyzeByClass(genes=DDgenes$Gene,
+                 classes=DDgenes$Class,
+                 nsamples=4293,
+                 includeGenes = malebggenes)
+
+DDfemale <- denovolyzeByClass(genes=DDgenes$Gene,
+                 classes=DDgenes$Class,
+                 nsamples=4293,
+                 includeGenes = femalegenes)
+
+DDfemalebg <- denovolyzeByClass(genes=DDgenes$Gene,
+                 classes=DDgenes$Class,
+                 nsamples=4293,
+                 includeGenes = femalebggenes)
+
+
+DDmale
+DDmalebg
+DDfemale
+DDfemalebg
+
+```
+
+```{r}
+
+#Intellectual Disability analysis
+IDmale <- denovolyzeByClass(genes=IDgenes$Gene,
+                 classes=IDgenes$Class,
+                 nsamples=192,
+                 includeGenes = malegenes)
+
+IDmalebg <- denovolyzeByClass(genes=IDgenes$Gene,
+                 classes=IDgenes$Class,
+                 nsamples=192,
+                 includeGenes = malebggenes)
+
+IDfemale <- denovolyzeByClass(genes=IDgenes$Gene,
+                 classes=IDgenes$Class,
+                 nsamples=192,
+                 includeGenes = femalegenes)
+
+IDfemalebg <- denovolyzeByClass(genes=IDgenes$Gene,
+                 classes=IDgenes$Class,
+                 nsamples=192,
+                 includeGenes = femalebggenes)
+
+
+IDmale
+IDmalebg
+IDfemale
+IDfemalebg
+
+```
+
+```{r}
+#Schizophrenia analysis
+SCZmale <- denovolyzeByClass(genes=SCZgenes$Gene,
+                 classes=SCZgenes$Class,
+                 nsamples=3394,
+                 includeGenes = malegenes)
+
+SCZmalebg <- denovolyzeByClass(genes=SCZgenes$Gene,
+                 classes=SCZgenes$Class,
+                 nsamples=3394,
+                 includeGenes = malebggenes)
+
+SCZfemale <- denovolyzeByClass(genes=SCZgenes$Gene,
+                 classes=SCZgenes$Class,
+                 nsamples=3394,
+                 includeGenes = femalegenes)
+
+SCZfemalebg <- denovolyzeByClass(genes=SCZgenes$Gene,
+                 classes=SCZgenes$Class,
+                 nsamples=3394,
+                 includeGenes = femalebggenes)
+
+
+SCZmale
+SCZmalebg
+SCZfemale
+SCZfemalebg
+
+
+```
+
+```{r}
+#Sibling analysis
+SIBmale <- denovolyzeByClass(genes=SIBgenes$Gene,
+                 classes=SIBgenes$Class,
+                 nsamples=1995,
+                 includeGenes = malegenes)
+
+SIBmalebg <- denovolyzeByClass(genes=SIBgenes$Gene,
+                 classes=SIBgenes$Class,
+                 nsamples=1995,
+                 includeGenes = malebggenes)
+
+SIBfemale <- denovolyzeByClass(genes=SIBgenes$Gene,
+                 classes=SIBgenes$Class,
+                 nsamples=1995,
+                 includeGenes = femalegenes)
+
+SIBfemalebg <- denovolyzeByClass(genes=SIBgenes$Gene,
+                 classes=SIBgenes$Class,
+                 nsamples=1995,
+                 includeGenes = femalebggenes)
+
+
+SIBmale
+SIBmalebg
+SIBfemale
+SIBfemalebg
+
+
+
+```
+

@@ -1,0 +1,89 @@
+---
+title: "celltypeanalysis"
+author: "Josh Gilheany (22221584)"
+date: "2023-06-12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(EWCE)
+library(biomaRt)
+
+
+
+
+#Generate cell type data Zeisel using cell expression data and cell type annotations
+#NOTE: If you are using Linux OS, you may remove "no_cores = 1" or set to the number of cores available on your computer's CPU
+#This may take a while
+setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data")
+load(file='CellTypeData_annot_Zeisel.rda')[1]
+ctd <- ctd[1]
+
+
+?useMart
+
+
+human = useMart("ensembl", dataset = "hsapiens_gene_ensembl", host = )
+all_hgnc <- getBM(attributes = ("hgnc_symbol"), mart = human)
+human.bg <- all_hgnc$hgnc_symbol
+
+
+
+setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data/FinalAnalyses")
+malegenes <- readLines("Malegenes.csv")
+
+femalegenes <- readLines("Femalegenes.csv")
+
+```
+
+```{r}
+setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data/FinalAnalyses")
+malegenelist <- malegenes
+malegenelist <- malegenelist[malegenelist %in% human.bg]
+  
+full_results = bootstrap_enrichment_test(sct_data=ctd,hits=malegenelist,
+                                      bg=human.bg,
+                                      reps=10000,
+                                      annotLevel=1,
+                                      geneSizeControl=TRUE,
+                                      genelistSpecies="human",sctSpecies="mouse")
+
+
+maleresults <- full_results$results[order(full_results$results$p),]
+
+write.table(maleresults, "maleresults.txt")
+```
+
+```{r}
+setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data/FinalAnalyses")
+femalegenelist <- femalegenes
+femalegenelist <- femalegenelist[femalegenelist %in% human.bg]
+
+
+  
+full_results = bootstrap_enrichment_test(sct_data=ctd,hits=femalegenelist,
+                                      bg=human.bg,
+                                      reps=10000,
+                                      annotLevel=1,
+                                      geneSizeControl=TRUE,
+                                      genelistSpecies="human",
+                                      sctSpecies="mouse"
+                                      #no_cores = 8,
+                                      #mtc_method = "BH",
+                                      #method = "gprofiler",
+                                      )
+
+
+femaleresults <- full_results$results[order(full_results$results$p),]
+
+write.table(femaleresults, "femaleresults.txt")
+
+
+?bootstrap_enrichment_test()
+```
+
