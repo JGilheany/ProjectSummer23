@@ -100,6 +100,41 @@ DD.bg
 SCZ.bg
 SIB.bg
 ```
+
+```{r}
+#Control analysis
+
+CTRLmale <- denovolyzeByClass(genes=CTRLgenes$Gene,
+                 classes=CTRLgenes$Class,
+                 nsamples=54,
+                 includeGenes = malegenes)
+
+CTRLmalebg <- denovolyzeByClass(genes=CTRLgenes$Gene,
+                 classes=CTRLgenes$Class,
+                 nsamples=54,
+                 includeGenes = malebggenes)
+
+CTRLfemale <- denovolyzeByClass(genes=CTRLgenes$Gene,
+                 classes=CTRLgenes$Class,
+                 nsamples=54,
+                 includeGenes = femalegenes)
+
+CTRLfemalebg <- denovolyzeByClass(genes=CTRLgenes$Gene,
+                 classes=CTRLgenes$Class,
+                 nsamples=54,
+                 includeGenes = femalebggenes)
+
+
+CTRLmale
+CTRLmalebg
+CTRLfemale
+CTRLfemalebg
+```
+
+
+
+
+
 ```{r}
 
 #Autism analysis
@@ -131,35 +166,7 @@ ASDfemale
 ASDfemalebg
 
 ```
-```{r}
-#Control analysis
 
-CTRLmale <- denovolyzeByClass(genes=CTRLgenes$Gene,
-                 classes=CTRLgenes$Class,
-                 nsamples=54,
-                 includeGenes = malegenes)
-
-CTRLmalebg <- denovolyzeByClass(genes=CTRLgenes$Gene,
-                 classes=CTRLgenes$Class,
-                 nsamples=54,
-                 includeGenes = malebggenes)
-
-CTRLfemale <- denovolyzeByClass(genes=CTRLgenes$Gene,
-                 classes=CTRLgenes$Class,
-                 nsamples=54,
-                 includeGenes = femalegenes)
-
-CTRLfemalebg <- denovolyzeByClass(genes=CTRLgenes$Gene,
-                 classes=CTRLgenes$Class,
-                 nsamples=54,
-                 includeGenes = femalebggenes)
-
-
-CTRLmale
-CTRLmalebg
-CTRLfemale
-CTRLfemalebg
-```
 
 ```{r}
 #DD analysis
@@ -282,6 +289,135 @@ SIBfemale
 SIBfemalebg
 
 
+
+```
+
+```{r}
+
+#competitive test
+setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data/Denovolyzer")
+compset <- read.csv("CompetetiveTest.csv")
+
+#compset
+
+p.vals <- c()
+enrich <- c()
+conf_int_1 <- c()
+conf_int_2 <- c()
+
+for (i in 1:24){
+  p.vals <- c(p.vals, poisson.test(x=c(compset$Obs_DEGs[i], compset$Obs_BG[i]), T=c(compset$Exp_DEGs[i], compset$Exp_BG[i]))$p.value)
+  enrich <- c(enrich, poisson.test(x=c(compset$Obs_DEGs[i], compset$Obs_BG[i]), T=c(compset$Exp_DEGs[i], compset$Exp_BG[i]))$estimate)
+  conf_int_1 <- c(conf_int_1, poisson.test(x=c(compset$Obs_DEGs[i], compset$Obs_BG[i]), T=c(compset$Exp_DEGs[i], compset$Exp_BG[i]))$conf.int[1])
+  conf_int_2 <- c(conf_int_2, poisson.test(x=c(compset$Obs_DEGs[i], compset$Obs_BG[i]), T=c(compset$Exp_DEGs[i], compset$Exp_BG[i]))$conf.int[2])
+
+}
+
+p.vals
+enrich
+conf_int_1
+conf_int_2
+#= Obs vs. expected DEGs, T = Obs vs expc. BG
+#file <- poisson.test(x=c(1,10), T=c(2,10))
+
+#file$conf.int
+```
+
+
+```{r}
+setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data/Denovolyzer")
+totalset <- compset
+
+length(p.vals)
+length(enrich)
+length(conf_int_1)
+length(conf_int_2)
+
+enrich
+
+totalset$p.vals <- p.vals
+totalset$enrich <- enrich
+totalset$conf_int_1 <- conf_int_1
+totalset$conf_int_2 <- conf_int_2
+
+totalset
+
+write.csv(totalset, "poissonanalysis.csv", row.names = FALSE)
+```
+
+
+
+
+```{r}
+
+setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data/FinalAnalyses")
+malegenes <- readLines("Malegenes.csv")
+
+femalegenes <- readLines("Femalegenes.csv")
+
+```
+
+
+
+```{r}
+library(biomaRt)
+
+hsmart <- useMart(dataset = "hsapiens_gene_ensembl", biomart = "ensembl")
+
+hsmart
+
+```
+
+```{r}
+?useEnsembl
+
+setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data/FinalAnalyses")
+
+malegenes <- readLines("Malegenes.csv")
+
+femalegenes <- readLines("Femalegenes.csv")
+
+#converts vector of malegenes into a table with matching entrez_ids to the hgnc symbol
+
+
+maleentrez <- getBM(
+  attributes = c('hgnc_symbol','entrezgene_id'), 
+  filters = 'hgnc_symbol',
+  values = malegenes,
+  mart = hsmart
+)
+
+length(malegenes)
+nrow(maleentrez)
+
+
+
+femaleentrez <- getBM(
+  attributes = c('entrezgene_id'), 
+  filters = 'hgnc_symbol',
+  values = femalegenes,
+  mart = hsmart
+)
+
+maleentrez
+
+length(femalegenes)
+nrow(femaleentrez)
+
+```
+
+```{r}
+setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data/FinalAnalyses")
+
+
+
+
+tmaleentrez <- t(maleentrez)
+
+tfemaleentrez <-t(femaleentrez)
+
+write.table((maleentrez$entrezgene_id), "maleentrezexport.txt", row.names = FALSE, sep="\t", col.names = FALSE, quote = FALSE)
+write.table((femaleentrez$entrezgene_id), "femaleentrezexport.txt", row.names = FALSE, sep="\t", col.names = FALSE, quote = FALSE)
 
 ```
 

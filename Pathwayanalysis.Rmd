@@ -148,6 +148,7 @@ mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
 
 
 ```{r}
+library(biomaRt)
 musGenes <- c("Hmmr", "Tlx3", "Cpeb4")
 #human = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
 #mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
@@ -158,11 +159,11 @@ convertMouseGeneList <- function(x){
 require("biomaRt")
 
 #internet bad, so taking these out to run separately rather than doing each time
-#human = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+human = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
 
-#mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
 
-genesV2 = getLDS(attributes = c("ensembl_gene_id"), filters = "ensembl_gene_id", values = x , mart = mouse, attributesL = c("hgnc_symbol"), martL = human, uniqueRows=T)
+genesV2 = getLDS(attributes = c("ensembl_gene_id"), filters = "ensembl_gene_id", values = x , mart = mouse, attributesL = c("entrez_id"), martL = human, uniqueRows=T)
 
 humanx <- unique(genesV2[, 2])
 
@@ -177,7 +178,9 @@ return(humanx)
 ```
 
 ```{r}
-convertMouseGeneList(diffgenesmale)
+entrezmale <- convertMouseGeneList(diffgenesmale)
+
+entrezfemale <- convertMouseGeneList(diffgenesfemale)
 
 ?useEnsembl
 ```
