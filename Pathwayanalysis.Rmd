@@ -12,12 +12,10 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(dplyr)
 library('biomaRt')
-library(tibble)
-
 
 get_upregulated <- function(df){
 
-	key <- intersect(rownames(df),#[which(df$log2FoldChange>=0.5)], 
+	key <- intersect(rownames(df)[which(df$log2FoldChange>=0)], 
 	                 rownames(df)[which(df$padj<=0.05)])
 
     results <- as.data.frame((df)[which(rownames(df) %in% key),])
@@ -26,8 +24,20 @@ get_upregulated <- function(df){
 
 get_downregulated <- function(df){
 
-  	key <- intersect(rownames(df),#[which(df$log2FoldChange<=-0.5)], 
+  	key <- intersect(rownames(df)[which(df$log2FoldChange<0)], 
   	                 rownames(df)[which(df$padj<=0.05)])
+
+  	results <- as.data.frame((df)[which(rownames(df) %in% key),])
+  	return(results)
+}
+
+
+
+
+get_regulated <- function(df){
+
+  	key <- intersect(rownames(df),
+  	       rownames(df)[which(df$padj<=0.05)])
 
   	results <- as.data.frame((df)[which(rownames(df) %in% key),])
   	return(results)
@@ -66,37 +76,41 @@ setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data/MQuants")
 
 upregmale <- get_upregulated(mtable)
 downregmale <- get_downregulated(mtable)
+regmale <- get_regulated(mtable)
 
 write.table(upregmale, "UDEGMale.txt")
 write.table(downregmale, "DDEGMale.txt")
+write.table(regmale, "DEGMale.txt")
 
-
-upregmale <- upregmale %>% 
+regmale <- regmale %>% 
   rownames_to_column(var = "Genes")
 
 
 
-diffgenesmale <- pull(upregmale, "Genes")
+diffgenesmale <- pull(regmale, "Genes")
 print(diffgenesmale, quote=FALSE)
 
 write.table(diffgenesmale, "diffgenesmale.txt", quote=FALSE, row.names = FALSE)
 
 setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data/FQuants")
+
 nrow(ftable)
 nrow(get_upregulated(ftable))
 nrow(get_downregulated(ftable))
 
 upregfem <- get_upregulated(ftable)
 downregfem <- get_downregulated(ftable)
+regfem <- get_regulated(ftable)
 
 write.table(upregfem, "UDEGFemale.txt")
 write.table(downregfem, "DDEGFemale.txt")
+write.table(regfem, "DEGFemale.txt")
 
-upregfem <- upregfem %>% 
+regfem <- regfem %>% 
   rownames_to_column(var = "Genes")
 
 
-diffgenesfem <- pull(upregfem, "Genes")
+diffgenesfem <- pull(regfem, "Genes")
 
 write.table(diffgenesfem, "diffgenesfem.txt", quote=FALSE, row.names = FALSE)
 
@@ -149,16 +163,13 @@ mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
 
 ```{r}
 library(biomaRt)
-musGenes <- c("Hmmr", "Tlx3", "Cpeb4")
-#human = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
-#mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
-# Basic function to convert mouse to human gene names
+
 
 convertMouseGeneList <- function(x){
 
 require("biomaRt")
 
-#internet bad, so taking these out to run separately rather than doing each time
+
 human = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
 
 mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")

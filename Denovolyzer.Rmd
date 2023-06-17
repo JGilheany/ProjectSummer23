@@ -36,6 +36,23 @@ SIBgenes <- read.csv2("Sibling_denovo_data.txt", sep="\t")
 ```
 
 ```{r}
+
+commongenes <- c()
+
+for (i in malegenes){
+  if (i %in% femalegenes ) {
+    commongenes <- c(commongenes, i)
+  }
+}
+
+commongenes
+
+setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data/SYNGO")
+write.table(commongenes, "commongenes.txt", quote=FALSE, row.names = FALSE)
+```
+
+
+```{r}
 malebggenes <- allgenes[allgenes %in% malegenes == FALSE]
 
 femalebggenes <- allgenes[allgenes %in% femalegenes == FALSE]
@@ -419,5 +436,102 @@ tfemaleentrez <-t(femaleentrez)
 write.table((maleentrez$entrezgene_id), "maleentrezexport.txt", row.names = FALSE, sep="\t", col.names = FALSE, quote = FALSE)
 write.table((femaleentrez$entrezgene_id), "femaleentrezexport.txt", row.names = FALSE, sep="\t", col.names = FALSE, quote = FALSE)
 
+```
+
+
+
+```{r}
+setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data/MAGMA")
+
+EDUA <- read.csv("EduAsiggenes.csv")
+
+
+
+EDUA
+
+#Compares male entrez ids to entrez ids in the EduA dataset and prints out matching ones
+
+maleEduA <- c()
+
+length(EDUA$GENE)
+
+for (i in EDUA$GENE){
+  if (i %in% maleentrez$entrezgene_id){
+    maleEduA <- c(maleEduA, i)
+  }
+}
+
+print(maleEduA)
+
+
+
+
+femaleEduA <- c()
+
+for (i in (EDUA$GENE)){
+  if (i %in% femaleentrez$entrezgene_id){
+    femaleEduA <- c(femaleEduA, i)
+  }
+}
+
+print(femaleEduA)
+
+length(femaleEduA)
+length(maleEduA)
+
+#write.table((maleEduA), "Malegenesin", row.names = FALSE, sep="\t", col.names = FALSE, quote = FALSE)
+
+
+bothEduA <- c()
+
+
+
+
+for (i in maleEduA){
+  if (i %in% femaleEduA){
+    bothEduA <- c(bothEduA, i)
+  }
+}
+
+
+maleEduA
+femaleEduA
+bothEduA
+```
+
+```{r}
+
+maleEduAg <- c()
+maleEduAp <- c()
+femaleEduAg <- c()
+femaleEduAp <- c()
+
+
+
+for (i in 1:length(EDUA$GENE)){
+  if (EDUA$GENE[i] %in% maleentrez$entrezgene_id){
+    maleEduAg <- c(maleEduAg, EDUA$GENE[i])
+    maleEduAp <- c(maleEduAp, EDUA$P[i])
+  }
+}
+maleEd <- data.frame(gene = maleEduAg,
+                     pval = maleEduAp
+                     )
+
+maleEd
+
+
+
+for (i in 1:length(EDUA$GENE)){
+  if (EDUA$GENE[i] %in% femaleentrez$entrezgene_id){
+    femaleEduAg <- c(femaleEduAg, EDUA$GENE[i])
+    femaleEduAp <- c(femaleEduAp, EDUA$P[i])
+  }
+}
+femaleEd <- data.frame(gene = femaleEduAg,
+                     pval = femaleEduAp
+                     )
+
+femaleEd
 ```
 

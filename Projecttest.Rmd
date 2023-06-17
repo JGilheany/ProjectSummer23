@@ -17,8 +17,6 @@ library(tximport)
 library(DESeq2)
 library(sva)
 library(PCAtools)
-library(vsn)
-library(hexbin)
 library(pheatmap)
 library(EnhancedVolcano)
 
@@ -26,10 +24,10 @@ library(EnhancedVolcano)
 
 
 ```{r}
+
 #First leg of female analysis
 
 setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data/FQuants")
-
 #Sets up tx2gene (allows you to map from transcripts to genes)
 txdb <- makeTxDbFromGFF("Mus_musculus.GRCm39.105.gtf")
 k <- keys(txdb, keytype ="TXNAME")
@@ -59,7 +57,7 @@ ffactor_cols <- sapply(fsamples, is.factor)
 ftxi.salmon <- tximport(ffiles, type = "salmon", tx2gene = tx2gene_filt, ignoreTxVersion = TRUE)
 
 
-#First analysis using DEseq2, this is to get a normalised count matrix which we can use to find surrogate variables using SVAseq. Note the only factor being compared here is Group_Combined.
+#First analysis using DEseq2, this is to get a normalised count matrix which we can use to find surrogate variables using SVAseq. The group being compared here is Group_Combined.
 fdds <- DESeqDataSetFromTximport(txi = ftxi.salmon,
                                 colData = fsamples, 
                                 design = ~ Group_Combined)
@@ -239,7 +237,7 @@ biplot(fpca,
        legendPosition = 'right',
        legendLabSize = 12,
        legendIconSize = 8.0,
-       title = 'Female Hipp',
+       title = 'Female',
        #subtitle = 'PC1 versus PC2'
        )
 
@@ -267,11 +265,14 @@ biplot(mpca,
        legendPosition = 'right',
        legendLabSize = 12,
        legendIconSize = 8.0,
-       title = 'Male Hipp',
+       title = 'Male',
        #subtitle = 'PC1 versus PC2'
        )
 
 #biplot(pca, colby = "Group_Combined", colkey = samples$Group_Combined ,title = "Female Hipp.")
+
+
+?biplot
 ```
 ```{r}
 get_upregulated <- function(df){
@@ -290,6 +291,7 @@ get_downregulated <- function(df){
   	return(results)
 }
 
+
 get_upregulated(mres)
 ```
 
@@ -300,7 +302,7 @@ get_upregulated(mres)
 ## Calculate distance between samples
 msampleDists <- dist(t(m.rld))
 
-msampleDistMatrix
+
 ## Place distances in matrix
 msampleDistMatrix <- as.matrix(msampleDists)
 
@@ -311,7 +313,7 @@ colnames(msampleDistMatrix) <- NULL
 m.ann <- data.frame(Condition = msamples$Group)
 
 mcol <- c("blue", "red1")
-names(col) <- c("MVG", "MVSI")
+#names(col) <- c("MVG", "MVSI")
 ann_col <- list(condition = mcol)
 
 ## match annotation rownames to distance mat
@@ -323,7 +325,121 @@ pheatmap(mat=msampleDistMatrix,
          clustering_distance_cols=msampleDists,
 
          ## heatmap colours
-         col=hcl.colors(100,"GnBu",rev=T))
+         col=hcl.colors(100,"GnBu",rev=T),
+               main = 'Male Clustering',)
+
+```
+Hierarchical clustering of male samples
+
+
+```{r}
+## Calculate distance between samples
+fsampleDists <- dist(t(f.rld))
+
+
+## Place distances in matrix
+fsampleDistMatrix <- as.matrix(fsampleDists)
+
+## Optional, remove colnames
+colnames(fsampleDistMatrix) <- NULL
+
+## create annotation dataframe
+f.ann <- data.frame(Condition = fsamples$Group)
+
+fcol <- c("blue", "red1")
+#names(col) <- c("MVG", "MVSI")
+ann_col <- list(condition = fcol)
+
+## match annotation rownames to distance mat
+rownames(f.ann) <- rownames(fsampleDistMatrix)
+
+pheatmap(mat=fsampleDistMatrix,
+         ## pass distance metric calculated to heatmap
+        clustering_distance_rows=fsampleDists,
+        clustering_distance_cols=fsampleDists,
+
+         ## heatmap colours
+        col=hcl.colors(100,"GnBu",rev=T),
+        
+        #title                
+        main = 'Female Clustering')
+
+```
+
+```{r}
+mres1 <- na.omit(mres)
+
+## calculate min/max axis values for plot (optional)
+min_width <- min(mres1$log2FoldChange)
+max_width <- max(mres1$log2FoldChange)
+max_height <- -log10(min(mres1[mres1$pvalue>0, 5]))
+
+## Grab up-regged genes based on our earlier values
+up <- subset(mres1, mres1$log2FoldChange >= 0 & mres1$pvalue <= 0.05)
+up <- up[order(-up$log2FoldChange),]
+up_list <- head(rownames(up), n=10L)
+
+## Grab top 10 down-reg genes for plot
+down <- subset(mres1, mres1$log2FoldChange < 0 & mres1$pvalue <= 0.1)
+down <- down[order(down$log2FoldChange),]
+down_list <- head(rownames(down), n=10L)
+
+## place top 20 DE genes in vector (optinal...)
+plot_top_20male <- c(up_list, down_list)
+
+EnhancedVolcano(mres1,
+                lab=rownames(mres1),
+                x="log2FoldChange",
+                y="pvalue",
+                drawConnectors=TRUE,
+                legendPosition = "none",
+                FCcutoff=1,
+                pCutoff=0.05,
+                title="Volcano Plot",
+                subtitle="Male samples",
+                caption = paste0('Total Genes = ', nrow(mres1)),
+                xlim=c(min_width, max_width),
+                ylim=c(0, max_height))
+
+plot_top_20male
+```
+
+```{r}
+fres1 <- na.omit(fres)
+
+## calculate min/max axis values for plot (optional)
+min_width <- min(fres1$log2FoldChange)
+max_width <- max(fres1$log2FoldChange)
+max_height <- -log10(min(fres1[fres1$pvalue>0, 5]))
+
+## Grab up-regged genes based on our earlier values
+up <- subset(fres1, fres1$log2FoldChange >= 0 & fres1$pvalue <= 0.05)
+up <- up[order(-up$log2FoldChange),]
+up_list <- head(rownames(up), n=10L)
+
+## Grab top 10 down-reg genes for plot
+down <- subset(fres1, fres1$log2FoldChange < 0 & fres1$pvalue <= 0.1)
+down <- down[order(down$log2FoldChange),]
+down_list <- head(rownames(down), n=10L)
+
+## place top 20 DE genes in vector (optinal...)
+plot_top_20female <- c(up_list, down_list)
+
+EnhancedVolcano(fres1,
+                lab=rownames(fres1),
+                x="log2FoldChange",
+                y="pvalue",
+                drawConnectors=TRUE,
+                legendPosition = "none",
+                FCcutoff=5,
+                pCutoff=0.05,
+                title="Volcano Plot",
+                subtitle="Female samples",
+                caption = paste0('Total Genes = ', nrow(fres1)),
+                xlim=c(min_width, max_width),
+                ylim=c(0, max_height))
+
+plot_top_20female
 
 ```
 
