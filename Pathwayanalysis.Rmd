@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(dplyr)
 library('biomaRt')
+library(tibble)
 
 get_upregulated <- function(df){
 
@@ -84,13 +85,21 @@ write.table(regmale, "DEGMale.txt")
 
 regmale <- regmale %>% 
   rownames_to_column(var = "Genes")
-
+upregmale <- upregmale %>% 
+  rownames_to_column(var = "Genes")
+downregmale <- downregmale %>% 
+  rownames_to_column(var = "Genes")
 
 
 diffgenesmale <- pull(regmale, "Genes")
 print(diffgenesmale, quote=FALSE)
+updiffgenesmale <- pull(upregmale, "Genes")
+downdiffgenesmale <- pull(downregmale, "Genes")
 
-write.table(diffgenesmale, "diffgenesmale.txt", quote=FALSE, row.names = FALSE)
+
+write.table(diffgenesmale, "diffgenesmale.txt", quote=FALSE, row.names = FALSE, col.names = FALSE)
+write.table(updiffgenesmale, "updiffgenesmale.txt", quote=FALSE, row.names = FALSE, col.names = FALSE)
+write.table(downdiffgenesmale, "downdiffgenesmale.txt", quote=FALSE, row.names = FALSE, col.names = FALSE)
 
 setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data/FQuants")
 
@@ -98,21 +107,32 @@ nrow(ftable)
 nrow(get_upregulated(ftable))
 nrow(get_downregulated(ftable))
 
-upregfem <- get_upregulated(ftable)
-downregfem <- get_downregulated(ftable)
-regfem <- get_regulated(ftable)
+upregfemale <- get_upregulated(ftable)
+downregfemale <- get_downregulated(ftable)
+regfemale <- get_regulated(ftable)
 
 write.table(upregfem, "UDEGFemale.txt")
 write.table(downregfem, "DDEGFemale.txt")
 write.table(regfem, "DEGFemale.txt")
 
-regfem <- regfem %>% 
+regfemale <- regfemale %>% 
+  rownames_to_column(var = "Genes")
+upregfemale <- upregfemale %>% 
+  rownames_to_column(var = "Genes")
+downregfemale <- downregfemale %>% 
   rownames_to_column(var = "Genes")
 
 
-diffgenesfem <- pull(regfem, "Genes")
+diffgenesfemale <- pull(regfemale, "Genes")
+print(diffgenesmale, quote=FALSE)
+updiffgenesfemale <- pull(upregfemale, "Genes")
+downdiffgenesfemale <- pull(downregfemale, "Genes")
 
-write.table(diffgenesfem, "diffgenesfem.txt", quote=FALSE, row.names = FALSE)
+
+write.table(diffgenesfemale, "diffgenesfemale.txt", quote=FALSE, row.names = FALSE, col.names = FALSE)
+write.table(updiffgenesfemale, "updiffgenesfemale.txt", quote=FALSE, row.names = FALSE, col.names = FALSE)
+write.table(downdiffgenesfemale, "downdiffgenesfemale.txt", quote=FALSE, row.names = FALSE, col.names = FALSE)
+
 
 
 #upregmale[,0]
@@ -129,8 +149,6 @@ searchDatasets(mart = ensembl, pattern = "mmusculus")
 
 ```{r}
 ensembl <- useDataset(dataset = "mmusculus_gene_ensembl", mart = ensembl)
-
-head(ensembl)
 ```
 
 
@@ -144,7 +162,6 @@ mart <- useDataset("mmusculus_gene_ensembl", useMart("ensembl"))
 genes <- rownames(upregfem)
 upregfem$id <- NA
 G_list <- getBM(filters= "ensembl_gene_id", attributes= c("external_gene_name"),values=genes,mart= mart)
-?getBM
 
 G_list
 listAttributes(ensembl)
@@ -170,11 +187,12 @@ convertMouseGeneList <- function(x){
 require("biomaRt")
 
 
-human = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+human = useMart("ensembl", dataset = "hsapiens_gene_ensembl", host="https://dec2021.archive.ensembl.org")
 
-mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl", host="https://dec2021.archive.ensembl.org")
 
-genesV2 = getLDS(attributes = c("ensembl_gene_id"), filters = "ensembl_gene_id", values = x , mart = mouse, attributesL = c("entrez_id"), martL = human, uniqueRows=T)
+genesV2 = getLDS(attributes = c("ensembl_gene_id"), filters = "ensembl_gene_id", values = x , mart = mouse, 
+                 attributesL = c("hgnc_id"), martL = human, uniqueRows=T, host="https://dec2021.archive.ensembl.org")
 
 humanx <- unique(genesV2[, 2])
 
@@ -189,11 +207,12 @@ return(humanx)
 ```
 
 ```{r}
-entrezmale <- convertMouseGeneList(diffgenesmale)
+hgncdiffmale <- convertMouseGeneList(diffgenesmale)
 
-entrezfemale <- convertMouseGeneList(diffgenesfemale)
+hgncdiffemale <- convertMouseGeneList(diffgenesfemale)
 
-?useEnsembl
+?getLDS
+
 ```
 ```{r}
 setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data")
