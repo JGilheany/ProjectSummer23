@@ -384,7 +384,7 @@ down <- subset(mres1, mres1$log2FoldChange < 0 & mres1$pvalue <= 0.1)
 down <- down[order(down$log2FoldChange),]
 down_list <- head(rownames(down), n=10L)
 
-## place top 20 DE genes in vector (optinal...)
+## place top 20 DE genes in vector
 plot_top_20male <- c(up_list, down_list)
 
 EnhancedVolcano(mres1,
@@ -395,10 +395,11 @@ EnhancedVolcano(mres1,
                 legendPosition = "none",
                 FCcutoff=1,
                 pCutoff=0.05,
-                title="Volcano Plot",
+                title="",
                 subtitle="Male samples",
                 caption = paste0('Total Genes = ', nrow(mres1)),
-                xlim=c(min_width, max_width),
+                #xlim=c(min_width, max_width),
+                xlim=c(-2, 2),
                 ylim=c(0, max_height))
 
 plot_top_20male
@@ -422,7 +423,7 @@ down <- subset(fres1, fres1$log2FoldChange < 0 & fres1$pvalue <= 0.1)
 down <- down[order(down$log2FoldChange),]
 down_list <- head(rownames(down), n=10L)
 
-## place top 20 DE genes in vector (optinal...)
+## place top 20 DE genes in vector
 plot_top_20female <- c(up_list, down_list)
 
 EnhancedVolcano(fres1,
@@ -431,15 +432,16 @@ EnhancedVolcano(fres1,
                 y="pvalue",
                 drawConnectors=TRUE,
                 legendPosition = "none",
-                FCcutoff=5,
+                FCcutoff=1,
                 pCutoff=0.05,
-                title="Volcano Plot",
+                title="",
                 subtitle="Female samples",
                 caption = paste0('Total Genes = ', nrow(fres1)),
-                xlim=c(min_width, max_width),
+                #xlim=c(min_width, max_width),
+                xlim=c(-2, 2),
                 ylim=c(0, max_height))
 
 plot_top_20female
 
 ```
-
+SPATA31F1 is homolog for the gene seen aboe
