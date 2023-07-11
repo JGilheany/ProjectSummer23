@@ -367,7 +367,66 @@ pheatmap(mat=fsampleDistMatrix,
 ```
 
 ```{r}
-mres1 <- na.omit(mres)
+library(tibble)
+library(dplyr)
+
+
+mresframe <- data.frame(mres)
+fresframe <- data.frame(fres)
+mresframe <- na.omit(mresframe)
+fresframe <- na.omit(fresframe)
+
+
+mresframe <- tibble::rownames_to_column(mresframe, "gene")
+fresframe <- tibble::rownames_to_column(fresframe, "gene")
+
+
+setwd("/media/josh/EXTERNAL_USB/Project/MSc_2023_data")
+
+
+
+mouse_human_genes <- read.csv2("Convert_ENSEMBL_MGI_HGNC.txt", sep="")
+
+convert_mouse_to_human <- function(gene_list){
+mgi <- c()
+hgnc <- c()
+  
+for (gene in gene_list){
+  if (gene %in% mouse_human_genes$mgi) {
+  row <- mouse_human_genes %>% filter(mgi == gene)
+  mgi <- c(mgi, gene)
+  hgnc <- c(hgnc, row$hgnc)
+}
+else {
+  mgi <- c(mgi, gene)
+  hgnc <- c(hgnc, "NA")
+  
+ }
+}
+  print(head(hgnc))
+  return (hgnc)
+}
+
+
+
+mresgenes <- convert_mouse_to_human(mresframe$gene)
+fresgenes <-convert_mouse_to_human(fresframe$gene)
+```
+
+
+```{r}
+mresframe$hgnc <- mresgenes
+
+fresframe$hgnc <- fresgenes
+
+
+mresframe
+
+```
+
+
+```{r}
+mres1 <- na.omit(mresframe)
 
 ## calculate min/max axis values for plot (optional)
 min_width <- min(mres1$log2FoldChange)
@@ -388,7 +447,7 @@ down_list <- head(rownames(down), n=10L)
 plot_top_20male <- c(up_list, down_list)
 
 EnhancedVolcano(mres1,
-                lab=rownames(mres1),
+                lab=mres1$hgnc,
                 x="log2FoldChange",
                 y="pvalue",
                 drawConnectors=TRUE,
@@ -406,7 +465,7 @@ plot_top_20male
 ```
 
 ```{r}
-fres1 <- na.omit(fres)
+fres1 <- na.omit(fresframe)
 
 ## calculate min/max axis values for plot (optional)
 min_width <- min(fres1$log2FoldChange)
@@ -427,7 +486,7 @@ down_list <- head(rownames(down), n=10L)
 plot_top_20female <- c(up_list, down_list)
 
 EnhancedVolcano(fres1,
-                lab=rownames(fres1),
+                lab=fres1$hgnc,
                 x="log2FoldChange",
                 y="pvalue",
                 drawConnectors=TRUE,
