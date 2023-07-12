@@ -234,11 +234,11 @@ biplot(fpca,
        colkey = c('FVG' ='royalblue', 'FVSI'='red1'),
        hline = 0,
        vline = 0,
-       legendPosition = 'right',
+       legendPosition = 'none',
        legendLabSize = 12,
        legendIconSize = 8.0,
-       title = 'Female',
-       #subtitle = 'PC1 versus PC2'
+       title = NULL,
+       subtitle = 'Female PC1 versus PC2'
        )
 
 #biplot(pca, colby = "Group_Combined", colkey = samples$Group_Combined ,title = "Female Hipp.")
@@ -262,11 +262,11 @@ biplot(mpca,
        colkey = c('MVG' ='royalblue', 'MVSI'='red1'),
        hline = 0,
        vline = 0,
-       legendPosition = 'right',
+       legendPosition = 'none',
        legendLabSize = 12,
        legendIconSize = 8.0,
-       title = 'Male',
-       #subtitle = 'PC1 versus PC2'
+       title = NULL,
+       subtitle = 'Male PC1 versus PC2'
        )
 
 #biplot(pca, colby = "Group_Combined", colkey = samples$Group_Combined ,title = "Female Hipp.")
