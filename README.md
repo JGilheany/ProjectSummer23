@@ -1,5 +1,7 @@
 # ProjectSummer23
 Remote code storage for GDS masters project
+Required files available on demand, email joshgilheany@gmail.com
+
 
 1. fastqc.sh is the initial experimental FastQC/multiQC that takes a directory as an input
 2. Trim_MultiQC.sh is the initial script used to trim the data and follow up with a multiQC report
